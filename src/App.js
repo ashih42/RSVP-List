@@ -1,26 +1,133 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { Component } from 'react';
 import './App.css';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import Header from './Components/Header';
+import MainContent from './Components/MainContent';
+
+class App extends Component {
+  state = {
+    isFiltered: false,
+    pendingGuest: '',
+    guests: [
+      // {
+      //   name: 'Treasure',
+      //   isConfirmed: false,
+      //   isEditing: false,
+      // },
+    ]
+  }
+
+  lastGuestId = 0;
+
+  newGuestId = () => {
+    const id = this.lastGuestId;
+    this.lastGuestId++;
+    return id;
+  }
+
+  toggleGuestProperty = (property, id) => {
+    this.setState({
+      guests: this.state.guests.map(guest => {
+        if (id === guest.id) {
+          return {
+            ...guest,
+            [property]: !guest[property],
+          };
+        }
+        return guest;
+      })
+    })
+  }
+
+  toggleConfirmation = id =>
+    this.toggleGuestProperty('isConfirmed', id);
+
+  removeGuest = id => {
+    this.setState(prevState => ({
+      guests: prevState.guests.filter(guest => id !== guest.id)
+    }));
+  }
+
+  toggleEditing = id =>
+    this.toggleGuestProperty('isEditing', id);
+
+  setName = (name, id) => {
+    this.setState({
+      guests: this.state.guests.map(guest => {
+        if (id === guest.id) {
+          return {
+            ...guest,
+            name,
+          };
+        }
+        return guest;
+      })
+    })
+  }
+
+  toggleFilter = () => {
+    this.setState(prevState => ({
+      isFiltered: !prevState.isFiltered,
+    }));
+  };
+
+
+  handleNameInput = e => {
+    this.setState({pendingGuest: e.target.value})
+  };
+
+  newGuestSubmitHandler = e => {
+    e.preventDefault();
+    this.setState(prevState => ({
+      guests: [
+        {
+          name: this.state.pendingGuest,
+          isConfirmed: false,
+          isEditing: false,
+          id: this.newGuestId(),
+        },
+        ...prevState.guests,
+      ],
+      pendingGuest: '',
+    }));
+  }
+
+  getTotalInvited = () => this.state.guests.length;
+
+  getAttendingGuests = () =>
+    this.state.guests.reduce(
+      (total, guest) => guest.isConfirmed ? total + 1 : total,
+      0
+    );
+  
+  render() {
+    const totalInvited = this.getTotalInvited();
+    const numberAttending = this.getAttendingGuests();
+    const numberUnconfirmed = totalInvited - numberAttending;
+
+    return (
+      <div className="App">
+        <Header
+          newGuestSubmitHandler={this.newGuestSubmitHandler}
+          pendingGuest={this.state.pendingGuest}
+          handleNameInput={this.handleNameInput}
+        />
+        <MainContent
+          toggleFilter={this.toggleFilter}
+          isFiltered={this.state.isFiltered}
+          totalInvited={totalInvited}
+          numberAttending={numberAttending}
+          numberUnconfirmed={numberUnconfirmed}
+          guests={this.state.guests}
+          toggleConfirmation={this.toggleConfirmation}
+          toggleEditing={this.toggleEditing}
+          setName={this.setName}
+          removeGuest={this.removeGuest}
+          pendingGuest={this.state.pendingGuest}
+        />
+      </div>
+    );
+  }
 }
 
 export default App;
